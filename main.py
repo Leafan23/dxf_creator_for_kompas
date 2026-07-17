@@ -16,8 +16,12 @@ class KompasAPI:
             Dispatch("Kompas.Application.7")._oleobj_.QueryInterface(self.api7.IApplication.CLSID,
                                                                      pythoncom.IID_IDispatch))
         self.kompas_document = self.application.ActiveDocument
-        self.kompas_document_3d = self.api7.IKompasDocument3D1(self.kompas_document)
-        self.view_projection_manager = self.kompas_document_3d.ViewProjectionManager
+        self.kompas_document_3d_1 = self.api7.IKompasDocument3D1(self.kompas_document)
+        self.kompas_document_3d = self.api7.IKompasDocument3D(self.kompas_document)
+        self.view_projection_manager = self.kompas_document_3d_1.ViewProjectionManager
+        self.selection_manager = self.kompas_document_3d.SelectionManager
+        print(self.selection_manager.SelectedObjects)
+
 
     def add_view(self, view_name):
         "добавить вид с именем"
@@ -34,7 +38,9 @@ if __name__ == '__main__':
     # Закрыть чертеж
 
     api = KompasAPI()
-    api.add_view('kkk')
+    print(api.view_projection_manager.OrientationNormalTo(api.selection_manager.SelectedObjects))
+    api.view_projection_manager.OrientationNormalTo(api.selection_manager.SelectedObjects)
+    api.add_view('kkk1')
     print(api.view_projection_manager.BaseUserOrientation)
     print(api.view_projection_manager.Count)
     print(api.view_projection_manager.Matrix3D)
