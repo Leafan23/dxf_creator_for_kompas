@@ -72,13 +72,9 @@ if __name__ == '__main__':
     api_drawing.layout_sheet.Delete()
 
     api_drawing.convert = api_drawing.application.Converter(api_drawing.lib_path)
-    print(api_drawing.convert) # почему-то None
     api_drawing.convert.Convert(api_drawing.kompas_document.PathName,
                                 api.kompas_document.PathName.rpartition('.')[0]+".dxf", 1, False)
     api_drawing.kompas_document.Close(0)
-
-    print(os.path.splitext(api.kompas_document.PathName))
-    print(api.kompas_document.PathName.rpartition('.')[0])
 
 
 
