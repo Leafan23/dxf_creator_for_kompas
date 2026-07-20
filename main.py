@@ -14,7 +14,10 @@ class KompasAPI:
         #  Подключим описание интерфейсов API7
         self.api7 = gencache.EnsureModule("{69AC2981-37C0-4379-84FD-5DD2F3C0A520}", 0, 1, 0)
         self.application = Dispatch("KOMPAS.Application.7")
-        self.ks_application = Dispatch("KOMPAS.Application.5")
+
+        system_settings = self.application.SystemSettings
+        self.lib_path = system_settings.SystemPath(1) + r"\ImpExp\dwgdxfExp.rtw"
+
         if not None:
             self.kompas_document = self.application.ActiveDocument
         else:
@@ -97,12 +100,11 @@ if __name__ == '__main__':
     #api_drawing.drawing_object.Update()
     api_drawing.layout_sheet.Delete()
 
-    api_drawing.kompas_document.ksSaveDocument(r"D:\Проекты\API\dxf_creator_for_kompas\Новый.dxf")
-
-    api_drawing.convert = api_drawing.application.Converter(r"D:\Проекты\API\dxf_creator_for_kompas\Pdf2d.dll")
+    api_drawing.convert = api_drawing.application.Converter(api_drawing.lib_path)
     print(api_drawing.convert) # почему-то None
     api_drawing.convert.Convert(api_drawing.kompas_document.PathName,
-                                r"D:\Проекты\API\dxf_creator_for_kompas\Новый.pdf", 0, False)
+                                r"D:\Проекты\API\dxf_creator_for_kompas\Новый.dxf", 1, False)
+
 
 
 
