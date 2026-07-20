@@ -39,13 +39,6 @@ class KompasAPI:
 
             self.layout_sheets = self.kompas_document.LayoutSheets
             self.layout_sheet = self.layout_sheets.ItemByNumber(1)
-            print(self.layout_sheet)
-
-
-
-
-    def convert_to_dxf(self):
-        pass
 
     def add_drawing_object(self):
         if self.view is not None:
@@ -56,6 +49,7 @@ class KompasAPI:
         view_projection_7 = self.view_projection_manager.Add()
         view_projection_7.Name = view_name
         view_projection_7.Update()
+
 
 if __name__ == '__main__':
     # Сделать нормально к выделенной поверхности
@@ -71,39 +65,20 @@ if __name__ == '__main__':
     api.view_projection_manager.OrientationNormalTo(api.selection_manager.SelectedObjects)
     api.add_view('kkk1')
 
-    """print(api.view_projection_manager.BaseUserOrientation)
-    print(api.view_projection_manager.Count)
-    print(api.view_projection_manager.Matrix3D)
-    print(api.view_projection_manager.Scale)
-    print(api.view_projection_manager.ViewProjectionScheme)"""
-
-    """for i in range(api.view_projection_manager.Count):
-        ViewProjectionManager = api.view_projection_manager.ViewProjection(i)
-        print(ViewProjectionManager.Name)
-        print(ViewProjectionManager.Current)
-        print(ViewProjectionManager.Scale)
-        print(ViewProjectionManager.UserProjectionIndex)
-        print(ViewProjectionManager.ViewProjectonType)
-        print('-------------------------------')
-        ViewProjectionManager.Update()"""
-
     # Создать пустой чертеж, без рамки
     api_drawing = KompasAPI(api.documents.Add(1,True))
-    #api_drawing.view = api_drawing.views.Add(1)
-    #api_drawing.add_drawing_object()
-    #api_drawing.association_view = api_drawing.api7.IAssociationView(api_drawing.view)
-    #print(api_drawing.association_view.SourceFileName)
-    #api_drawing.association_view.SourceFileName = api.kompas_document.PathName # ссылка на 3d документ
-    #api_drawing.association_view.Rebuild()
 
     api_drawing.views.AddStandartViews(api.kompas_document.PathName,'kkk1', 0, 0,0,1,0,0)
-    #api_drawing.drawing_object.Update()
     api_drawing.layout_sheet.Delete()
 
     api_drawing.convert = api_drawing.application.Converter(api_drawing.lib_path)
     print(api_drawing.convert) # почему-то None
     api_drawing.convert.Convert(api_drawing.kompas_document.PathName,
-                                r"D:\Проекты\API\dxf_creator_for_kompas\Новый.dxf", 1, False)
+                                api.kompas_document.PathName.rpartition('.')[0]+".dxf", 1, False)
+    api_drawing.kompas_document.Close(0)
+
+    print(os.path.splitext(api.kompas_document.PathName))
+    print(api.kompas_document.PathName.rpartition('.')[0])
 
 
 
