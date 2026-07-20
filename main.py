@@ -13,9 +13,8 @@ class KompasAPI:
         self.ShowOnSheet = 0
         #  Подключим описание интерфейсов API7
         self.api7 = gencache.EnsureModule("{69AC2981-37C0-4379-84FD-5DD2F3C0A520}", 0, 1, 0)
-        self.application = self.api7.IApplication(
-            Dispatch("Kompas.Application.7")._oleobj_.QueryInterface(self.api7.IApplication.CLSID,
-                                                                     pythoncom.IID_IDispatch))
+        self.application = Dispatch("KOMPAS.Application.7")
+        self.ks_application = Dispatch("KOMPAS.Application.5")
         if not None:
             self.kompas_document = self.application.ActiveDocument
         else:
@@ -40,6 +39,11 @@ class KompasAPI:
             print(self.layout_sheet)
 
 
+
+
+    def convert_to_dxf(self):
+        pass
+
     def add_drawing_object(self):
         if self.view is not None:
             self.drawing_object = self.api7.IDrawingObject(self.view)
@@ -63,13 +67,14 @@ if __name__ == '__main__':
     sleep(1)
     api.view_projection_manager.OrientationNormalTo(api.selection_manager.SelectedObjects)
     api.add_view('kkk1')
-    print(api.view_projection_manager.BaseUserOrientation)
+
+    """print(api.view_projection_manager.BaseUserOrientation)
     print(api.view_projection_manager.Count)
     print(api.view_projection_manager.Matrix3D)
     print(api.view_projection_manager.Scale)
-    print(api.view_projection_manager.ViewProjectionScheme)
+    print(api.view_projection_manager.ViewProjectionScheme)"""
 
-    for i in range(api.view_projection_manager.Count):
+    """for i in range(api.view_projection_manager.Count):
         ViewProjectionManager = api.view_projection_manager.ViewProjection(i)
         print(ViewProjectionManager.Name)
         print(ViewProjectionManager.Current)
@@ -77,7 +82,7 @@ if __name__ == '__main__':
         print(ViewProjectionManager.UserProjectionIndex)
         print(ViewProjectionManager.ViewProjectonType)
         print('-------------------------------')
-        ViewProjectionManager.Update()
+        ViewProjectionManager.Update()"""
 
     # Создать пустой чертеж, без рамки
     api_drawing = KompasAPI(api.documents.Add(1,True))
@@ -91,6 +96,13 @@ if __name__ == '__main__':
     api_drawing.views.AddStandartViews(api.kompas_document.PathName,'kkk1', 0, 0,0,1,0,0)
     #api_drawing.drawing_object.Update()
     api_drawing.layout_sheet.Delete()
+
+    api_drawing.kompas_document.ksSaveDocument(r"D:\Проекты\API\dxf_creator_for_kompas\Новый.dxf")
+
+    api_drawing.convert = api_drawing.application.Converter(r"D:\Проекты\API\dxf_creator_for_kompas\Pdf2d.dll")
+    print(api_drawing.convert) # почему-то None
+    api_drawing.convert.Convert(api_drawing.kompas_document.PathName,
+                                r"D:\Проекты\API\dxf_creator_for_kompas\Новый.pdf", 0, False)
 
 
 
