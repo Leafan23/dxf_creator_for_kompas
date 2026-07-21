@@ -95,14 +95,14 @@ if __name__ == '__main__':
     sleep(1) # надо для того, что бы камера успела навестись в положение "Нормально к..", иначе вид получается промежуточный
 
     # Создать ориентацию вида по этой поверхности
-    api.add_view('kkk1')
+    api.add_view('Для развертки')
 
     # Создать пустой чертеж, без рамки
     api_drawing = KompasAPI(api.documents.Add(1,True))
     api_drawing.application.HideMessage = 1
 
     # Вставить вид с модели с сохраненным видом, удалить рамку
-    api_drawing.views.AddStandartViews(api.kompas_document.PathName,'kkk1', 0, 0,0,1,0,0)
+    api_drawing.views.AddStandartViews(api.kompas_document.PathName,'Для развертки', 0, 0,0,1,0,0)
     api_drawing.view = api_drawing.views.View(1)
     api_drawing.association_view = api_drawing.api7.IAssociationView(api_drawing.view)
     api_drawing.association_view.Unfold = True
