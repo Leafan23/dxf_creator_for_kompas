@@ -48,6 +48,7 @@ class KompasAPI:
             self.view_layers_manager = self.kompas_document_2d.ViewsAndLayersManager
             self.views = self.view_layers_manager.Views
             self.view = None
+            self.view_designation = None
             self.drawing_object = None
             self.association_view = None
 
@@ -61,6 +62,17 @@ class KompasAPI:
     def add_drawing_object(self):
         if self.view is not None:
             self.drawing_object = self.api7.IDrawingObject(self.view)
+
+    def print_view_propertys(self):
+        print('view.Angle = ', self.view.Angle)
+        print('view.Background = ', self.view.Background)
+        print('view.Color = ', self.view.Color)
+        print('view.Comment = ', self.view.Comment)
+        print('view.Current = ', self.view.Current)
+        print('view.Name = ', self.view.Name)
+        print('view.Number = ', self.view.Number)
+        print('view.ObjectCount = ', self.view.ObjectCount)
+        print('view.Scale = ', self.view.Scale)
 
     def add_view(self, view_name):
         """Добавить вид с именем. Обновляет вид, если уже есть с таким именем"""
@@ -83,12 +95,38 @@ if __name__ == '__main__':
     # Создать ориентацию вида по этой поверхности
     api.add_view('kkk1')
 
+    for i in range(api.view_projection_manager.Count):
+            ViewProjectionManager = api.view_projection_manager.ViewProjection(i)
+            print(ViewProjectionManager.Name)
+            print(ViewProjectionManager.Current)
+            print(ViewProjectionManager.Scale)
+            print(ViewProjectionManager.UserProjectionIndex)
+            print(ViewProjectionManager.ViewProjectonType)
+            print('-------------------------------')
+            ViewProjectionManager.Update()
+
     # Создать пустой чертеж, без рамки
     api_drawing = KompasAPI(api.documents.Add(1,True))
     api_drawing.application.HideMessage = 1
 
     # Вставить вид с модели с сохраненным видом, удалить рамку
+
     api_drawing.views.AddStandartViews(api.kompas_document.PathName,'kkk1', 0, 0,0,1,0,0)
+    api_drawing.view = api_drawing.views.View(1)
+    print(api_drawing.view)
+    api_drawing.association_view = api_drawing.api7.IAssociationView(api_drawing.view)
+    #api_drawing.view_designation = api_drawing.api7.IViewDesignation(api_drawing.view)
+    print('association_view.Unfold = ', api_drawing.association_view.Unfold)
+    api_drawing.association_view.Unfold = True
+    api_drawing.association_view.Update()
+
+    api_drawing.drawing_object = api_drawing.api7.IDrawingObject(api_drawing.view)
+    api_drawing.drawing_object.Update()
+    api_drawing.view.Update()
+    print('association_view.Unfold = ', api_drawing.association_view.Unfold)
+    #print(IDrawingObject)
+    api_drawing.print_view_propertys()
+
     api_drawing.layout_sheet.Delete()
 
     # Сохранить как dxf
@@ -98,7 +136,7 @@ if __name__ == '__main__':
     api_drawing.application.HideMessage = 0
 
     # Закрыть чертеж
-    api_drawing.kompas_document.Close(0)
+    #api_drawing.kompas_document.Close(0)
 
 
 
