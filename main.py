@@ -1,10 +1,11 @@
-from time import sleep
+#TODO v0.2 Сделать пакетное открываение деталей
+#TODO v0.2 Сделать автоматическое определение самой большой поверхности
+#TODO v0.2 Сделать определение толщины для листовых и не для листовых деталей
 
-import pythoncom
+#TODO Есть баг, иногда вид в 3Д модели не удаляется, а добавляется с таким же именем, надо что бы вид с одинаковым именем удалялся
+
+from time import sleep
 from win32com.client import Dispatch, gencache, VARIANT
-import datetime as dt
-import configparser
-import os.path
 import sys
 
 
@@ -45,6 +46,7 @@ class KompasAPI:
 
         elif self.kompas_document.DocumentType == 1: # ksDocumentDrawing 1 Чертеж
             self.kompas_document_2d = self.api7.IKompasDocument2D(self.kompas_document)
+            self.kompas_document_2d_1 = self.api7.IKompasDocument2D1(self.kompas_document)
             self.view_layers_manager = self.kompas_document_2d.ViewsAndLayersManager
             self.views = self.view_layers_manager.Views
             self.view = None
@@ -95,38 +97,17 @@ if __name__ == '__main__':
     # Создать ориентацию вида по этой поверхности
     api.add_view('kkk1')
 
-    for i in range(api.view_projection_manager.Count):
-            ViewProjectionManager = api.view_projection_manager.ViewProjection(i)
-            print(ViewProjectionManager.Name)
-            print(ViewProjectionManager.Current)
-            print(ViewProjectionManager.Scale)
-            print(ViewProjectionManager.UserProjectionIndex)
-            print(ViewProjectionManager.ViewProjectonType)
-            print('-------------------------------')
-            ViewProjectionManager.Update()
-
     # Создать пустой чертеж, без рамки
     api_drawing = KompasAPI(api.documents.Add(1,True))
     api_drawing.application.HideMessage = 1
 
     # Вставить вид с модели с сохраненным видом, удалить рамку
-
     api_drawing.views.AddStandartViews(api.kompas_document.PathName,'kkk1', 0, 0,0,1,0,0)
     api_drawing.view = api_drawing.views.View(1)
-    print(api_drawing.view)
     api_drawing.association_view = api_drawing.api7.IAssociationView(api_drawing.view)
-    #api_drawing.view_designation = api_drawing.api7.IViewDesignation(api_drawing.view)
-    print('association_view.Unfold = ', api_drawing.association_view.Unfold)
     api_drawing.association_view.Unfold = True
-    api_drawing.association_view.Update()
-
-    api_drawing.drawing_object = api_drawing.api7.IDrawingObject(api_drawing.view)
-    api_drawing.drawing_object.Update()
-    api_drawing.view.Update()
-    print('association_view.Unfold = ', api_drawing.association_view.Unfold)
-    #print(IDrawingObject)
-    api_drawing.print_view_propertys()
-
+    api_drawing.association_view.Update() # возможно не нужно, заменяется следующей командой на перестройку
+    api_drawing.kompas_document_2d_1.RebuildDocument() # перестроение всего документа, скорее всего излишнее действие
     api_drawing.layout_sheet.Delete()
 
     # Сохранить как dxf
@@ -136,7 +117,7 @@ if __name__ == '__main__':
     api_drawing.application.HideMessage = 0
 
     # Закрыть чертеж
-    #api_drawing.kompas_document.Close(0)
+    api_drawing.kompas_document.Close(0)
 
 
 
