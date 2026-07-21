@@ -3,9 +3,6 @@
 #TODO v0.2 Сделать определение толщины для листовых и не для листовых деталей
 #TODO v0.2 Добавить работу с исполнениями (сейчас сохраняется только первое исполнение)
 
-#TODO Есть баг, иногда вид в 3Д модели не удаляется, а добавляется с таким же именем, надо что бы вид с одинаковым именем удалялся
-#TODO Есть баг, который создает развертку на детали, хотя эта деталь не является листовой
-
 from time import sleep
 from win32com.client import Dispatch, gencache, VARIANT
 import sys
@@ -13,7 +10,6 @@ import sys
 
 class KompasAPI:
     def __init__(self, kompas_document=None):
-        self.ShowOnSheet = 0
         #  Подключим описание интерфейсов API7
         self.api7 = gencache.EnsureModule("{69AC2981-37C0-4379-84FD-5DD2F3C0A520}", 0, 1, 0)
         self.application = Dispatch("KOMPAS.Application.7")
@@ -32,19 +28,28 @@ class KompasAPI:
             self.kompas_document_3d = self.api7.IKompasDocument3D(self.kompas_document)
             self.view_projection_manager = self.kompas_document_3d_1.ViewProjectionManager
             self.selection_manager = self.kompas_document_3d.SelectionManager
-
-            # Создание развертки и ее обновление по выделенной поверхности
             self.part_7 = self.kompas_document_3d.TopPart
             self.sheet_metal_container = self.api7.ISheetMetalContainer(self.part_7)
-            self.sheet_metal_bend_unfold_parameters = self.sheet_metal_container.SheetMetalBendUnfoldParameters
-            if self.sheet_metal_bend_unfold_parameters.IsCreated:
-                self.sheet_metal_bend_unfold_parameters.FixedFaces = None
-                self.sheet_metal_bend_unfold_parameters.UpdateParam()
-                self.sheet_metal_bend_unfold_parameters.FixedFaces = self.selection_manager.SelectedObjects
-                self.sheet_metal_bend_unfold_parameters.UpdateParam()
+            self.sheet_metal_bodies = self.sheet_metal_container.SheetMetalBodies
+            self.sheet_metal_body = self.sheet_metal_bodies.SheetMetalBody(0)
+            self.converts_to_sheet_metals = self.sheet_metal_container.ConvertsToSheetMetals
+            self.convert_to_sheet_metal = self.converts_to_sheet_metals.ConvertToSheetMetal(0)
+
+            if self.sheet_metal_body is None and self.convert_to_sheet_metal is None:
+                self.is_sheet_metal = False
             else:
-                self.sheet_metal_bend_unfold_parameters.FixedFaces = self.selection_manager.SelectedObjects
-                self.sheet_metal_bend_unfold_parameters.UpdateParam()
+                self.is_sheet_metal = True
+            # Создание развертки и ее обновление по выделенной поверхности
+            if self.is_sheet_metal:
+                self.sheet_metal_bend_unfold_parameters = self.sheet_metal_container.SheetMetalBendUnfoldParameters
+                if self.sheet_metal_bend_unfold_parameters.IsCreated:
+                    self.sheet_metal_bend_unfold_parameters.FixedFaces = None
+                    self.sheet_metal_bend_unfold_parameters.UpdateParam()
+                    self.sheet_metal_bend_unfold_parameters.FixedFaces = self.selection_manager.SelectedObjects
+                    self.sheet_metal_bend_unfold_parameters.UpdateParam()
+                else:
+                    self.sheet_metal_bend_unfold_parameters.FixedFaces = self.selection_manager.SelectedObjects
+                    self.sheet_metal_bend_unfold_parameters.UpdateParam()
 
         elif self.kompas_document.DocumentType == 1: # ksDocumentDrawing 1 Чертеж
             self.kompas_document_2d = self.api7.IKompasDocument2D(self.kompas_document)
@@ -105,10 +110,11 @@ if __name__ == '__main__':
 
     # Вставить вид с модели с сохраненным видом, удалить рамку
     api_drawing.views.AddStandartViews(api.kompas_document.PathName,'Для развертки', 0, 0,0,1,0,0)
-    api_drawing.view = api_drawing.views.View(1)
-    api_drawing.association_view = api_drawing.api7.IAssociationView(api_drawing.view)
-    api_drawing.association_view.Unfold = True
-    api_drawing.association_view.Update() # возможно не нужно, заменяется следующей командой на перестройку
+    if api.is_sheet_metal is True:
+        api_drawing.view = api_drawing.views.View(1)
+        api_drawing.association_view = api_drawing.api7.IAssociationView(api_drawing.view)
+        api_drawing.association_view.Unfold = True
+        api_drawing.association_view.Update() # возможно не нужно, заменяется следующей командой на перестройку
     api_drawing.kompas_document_2d_1.RebuildDocument() # перестроение всего документа, скорее всего излишнее действие
     api_drawing.layout_sheet.Delete()
 
