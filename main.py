@@ -46,34 +46,40 @@ class KompasAPI:
 
     def add_view(self, view_name):
         """добавить вид с именем"""
+        # Удалить вид если такое имя уже существует
+        if self.view_projection_manager.ViewProjection(view_name) is not None:
+            view_projection_7 = self.view_projection_manager.ViewProjection(view_name)
+            view_projection_7.Delete()
         view_projection_7 = self.view_projection_manager.Add()
         view_projection_7.Name = view_name
         view_projection_7.Update()
 
 
 if __name__ == '__main__':
-    # Сделать нормально к выделенной поверхности
-    # Создать ориентацию вида по этой поверхности
-    # Создать пустой чертеж, без рамки
-    # Вставить вид с модели с сохраненным видом
-    # Сохранить как dxf
-    # Закрыть чертеж
-
     api = KompasAPI()
-    print(api.view_projection_manager.OrientationNormalTo(api.selection_manager.SelectedObjects))
-    sleep(1)
+
+    # Сделать нормально к выделенной поверхности
     api.view_projection_manager.OrientationNormalTo(api.selection_manager.SelectedObjects)
+    sleep(1) # надо для того, что бы камера успела навестись в положение "Нормально к..", иначе вид получается промежуточный
+
+    # Создать ориентацию вида по этой поверхности
     api.add_view('kkk1')
 
     # Создать пустой чертеж, без рамки
     api_drawing = KompasAPI(api.documents.Add(1,True))
+    api_drawing.application.HideMessage = 1
 
+    # Вставить вид с модели с сохраненным видом, удалить рамку
     api_drawing.views.AddStandartViews(api.kompas_document.PathName,'kkk1', 0, 0,0,1,0,0)
     api_drawing.layout_sheet.Delete()
 
+    # Сохранить как dxf
     api_drawing.convert = api_drawing.application.Converter(api_drawing.lib_path)
     api_drawing.convert.Convert(api_drawing.kompas_document.PathName,
                                 api.kompas_document.PathName.rpartition('.')[0]+".dxf", 1, False)
+    api_drawing.application.HideMessage = 0
+
+    # Закрыть чертеж
     api_drawing.kompas_document.Close(0)
 
 
