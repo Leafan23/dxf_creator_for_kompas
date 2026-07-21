@@ -17,6 +17,7 @@ class KompasAPI:
 
         system_settings = self.application.SystemSettings
         self.lib_path = system_settings.SystemPath(1) + r"\ImpExp\dwgdxfExp.rtw"
+        self.is_sheet_metal = None # Признак детали как листового тела
 
         if not None:
             self.kompas_document = self.application.ActiveDocument
@@ -28,7 +29,20 @@ class KompasAPI:
             self.kompas_document_3d = self.api7.IKompasDocument3D(self.kompas_document)
             self.view_projection_manager = self.kompas_document_3d_1.ViewProjectionManager
             self.selection_manager = self.kompas_document_3d.SelectionManager
-            print(self.selection_manager.SelectedObjects)
+
+            # Создание развертки и ее обновление по выделенной поверхности
+            self.part_7 = self.kompas_document_3d.TopPart
+            self.sheet_metal_container = self.api7.ISheetMetalContainer(self.part_7)
+            self.sheet_metal_bend_unfold_parameters = self.sheet_metal_container.SheetMetalBendUnfoldParameters
+            if self.sheet_metal_bend_unfold_parameters.IsCreated:
+                self.sheet_metal_bend_unfold_parameters.FixedFaces = None
+                self.sheet_metal_bend_unfold_parameters.UpdateParam()
+                self.sheet_metal_bend_unfold_parameters.FixedFaces = self.selection_manager.SelectedObjects
+                self.sheet_metal_bend_unfold_parameters.UpdateParam()
+            else:
+                self.sheet_metal_bend_unfold_parameters.FixedFaces = self.selection_manager.SelectedObjects
+                self.sheet_metal_bend_unfold_parameters.UpdateParam()
+
         elif self.kompas_document.DocumentType == 1: # ksDocumentDrawing 1 Чертеж
             self.kompas_document_2d = self.api7.IKompasDocument2D(self.kompas_document)
             self.view_layers_manager = self.kompas_document_2d.ViewsAndLayersManager
@@ -39,13 +53,17 @@ class KompasAPI:
 
             self.layout_sheets = self.kompas_document.LayoutSheets
             self.layout_sheet = self.layout_sheets.ItemByNumber(1)
+        else:
+            #TODO Сделать всплывающее окно
+            print('Ошибка, макрос работает только с деталью')
+            sys.exit()
 
     def add_drawing_object(self):
         if self.view is not None:
             self.drawing_object = self.api7.IDrawingObject(self.view)
 
     def add_view(self, view_name):
-        """добавить вид с именем"""
+        """Добавить вид с именем. Обновляет вид, если уже есть с таким именем"""
         # Удалить вид если такое имя уже существует
         if self.view_projection_manager.ViewProjection(view_name) is not None:
             view_projection_7 = self.view_projection_manager.ViewProjection(view_name)
