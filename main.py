@@ -141,7 +141,7 @@ class CreateDxf:
         api_drawing.application.HideMessage = 0
 
         # Закрыть чертеж
-        #api_drawing.kompas_document.Close(0)
+        api_drawing.kompas_document.Close(0)
 
 
 if __name__ == '__main__':
