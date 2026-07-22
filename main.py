@@ -23,12 +23,23 @@ class KompasAPI:
         else:
             self.kompas_document = kompas_document
         self.documents = self.application.Documents
+
         if self.kompas_document.DocumentType == 4: # ksDocumentPart 4 Деталь
             self.kompas_document_3d_1 = self.api7.IKompasDocument3D1(self.kompas_document)
             self.kompas_document_3d = self.api7.IKompasDocument3D(self.kompas_document)
             self.view_projection_manager = self.kompas_document_3d_1.ViewProjectionManager
             self.selection_manager = self.kompas_document_3d.SelectionManager
             self.part_7 = self.kompas_document_3d.TopPart
+            self.embodiments_manager = self.api7.IEmbodimentsManager(self.part_7)
+
+            self.current_embodiment_marking = self.embodiments_manager.GetCurrentEmbodimentMarking(-1, False)
+            self.embodiment = self.embodiments_manager.SetCurrentEmbodiment
+            print('-1 - ', self.current_embodiment_marking)
+            print('1 - ', self.embodiments_manager.GetCurrentEmbodimentMarking(1, False))
+            print('2 - ', self.embodiments_manager.GetCurrentEmbodimentMarking(2, False))
+            print('4 - ', self.embodiments_manager.GetCurrentEmbodimentMarking(4, False))
+            print('8 - ', self.embodiments_manager.GetCurrentEmbodimentMarking(8, False))
+
             self.sheet_metal_container = self.api7.ISheetMetalContainer(self.part_7)
             self.sheet_metal_bodies = self.sheet_metal_container.SheetMetalBodies
             self.sheet_metal_body = self.sheet_metal_bodies.SheetMetalBody(0)
@@ -50,7 +61,6 @@ class KompasAPI:
                 else:
                     self.sheet_metal_bend_unfold_parameters.FixedFaces = self.selection_manager.SelectedObjects
                     self.sheet_metal_bend_unfold_parameters.UpdateParam()
-
         elif self.kompas_document.DocumentType == 1: # ksDocumentDrawing 1 Чертеж
             self.kompas_document_2d = self.api7.IKompasDocument2D(self.kompas_document)
             self.kompas_document_2d_1 = self.api7.IKompasDocument2D1(self.kompas_document)
@@ -60,7 +70,8 @@ class KompasAPI:
             self.view_designation = None
             self.drawing_object = None
             self.association_view = None
-
+            self.embodiments_manager = None
+            self.embodiment = None
             self.layout_sheets = self.kompas_document.LayoutSheets
             self.layout_sheet = self.layout_sheets.ItemByNumber(1)
         else:
@@ -94,38 +105,55 @@ class KompasAPI:
         view_projection_7.Update()
 
 
-if __name__ == '__main__':
-    api = KompasAPI()
+class CreateDxf:
+    def __init__(self):
+        api = KompasAPI()
 
-    # Сделать нормально к выделенной поверхности
-    api.view_projection_manager.OrientationNormalTo(api.selection_manager.SelectedObjects)
-    sleep(1) # надо для того, что бы камера успела навестись в положение "Нормально к..", иначе вид получается промежуточный
+        # Сделать нормально к выделенной поверхности
+        api.view_projection_manager.OrientationNormalTo(api.selection_manager.SelectedObjects)
+        sleep(
+            1)  # надо для того, что бы камера успела навестись в положение "Нормально к..", иначе вид получается промежуточный
 
-    # Создать ориентацию вида по этой поверхности
-    api.add_view('Для развертки')
+        # Создать ориентацию вида по этой поверхности
+        api.add_view('Для развертки')
 
-    # Создать пустой чертеж, без рамки
-    api_drawing = KompasAPI(api.documents.Add(1,True))
-    api_drawing.application.HideMessage = 1
+        # Создать пустой чертеж, без рамки
+        api_drawing = KompasAPI(api.documents.Add(1, True))
+        api_drawing.application.HideMessage = 1
 
-    # Вставить вид с модели с сохраненным видом, удалить рамку
-    api_drawing.views.AddStandartViews(api.kompas_document.PathName,'Для развертки', 0, 0,0,1,0,0)
-    if api.is_sheet_metal is True:
+        # Вставить вид с модели с сохраненным видом, удалить рамку
+        api_drawing.views.AddStandartViews(api.kompas_document.PathName, 'Для развертки', 0, 0, 0, 1, 0, 0)
+
         api_drawing.view = api_drawing.views.View(1)
         api_drawing.association_view = api_drawing.api7.IAssociationView(api_drawing.view)
-        api_drawing.association_view.Unfold = True
-        api_drawing.association_view.Update() # возможно не нужно, заменяется следующей командой на перестройку
-    api_drawing.kompas_document_2d_1.RebuildDocument() # перестроение всего документа, скорее всего излишнее действие
-    api_drawing.layout_sheet.Delete()
+        if api.is_sheet_metal:
+            api_drawing.association_view.Unfold = True
 
-    # Сохранить как dxf
-    api_drawing.convert = api_drawing.application.Converter(api_drawing.lib_path)
-    api_drawing.convert.Convert(api_drawing.kompas_document.PathName,
-                                api.kompas_document.PathName.rpartition('.')[0]+".dxf", 1, False)
-    api_drawing.application.HideMessage = 0
+        api_drawing.embodiments_manager = api_drawing.api7.IEmbodimentsManager(api_drawing.association_view)
+        api_drawing.embodiments_manager.SetCurrentEmbodiment(api.current_embodiment_marking)
 
-    # Закрыть чертеж
-    api_drawing.kompas_document.Close(0)
+        print(api_drawing.embodiments_manager.GetCurrentEmbodimentMarking(-1, False))
+        print(api_drawing.association_view.ProjectionName)
+
+        api_drawing.association_view.Update()
+        #print(api_drawing.association_view.AssociationObjects(api_drawing.))
+        api_drawing.kompas_document_2d_1.RebuildDocument()  # перестроение всего документа, скорее всего излишнее действие
+        api_drawing.layout_sheet.Delete()
+
+        # Сохранить как dxf
+        api_drawing.convert = api_drawing.application.Converter(api_drawing.lib_path)
+        api_drawing.convert.Convert(api_drawing.kompas_document.PathName,
+                                    api.kompas_document.PathName.rpartition('.')[0] +
+                                    api.embodiments_manager.GetCurrentEmbodimentMarking(2, False) +
+                                    ".dxf", 1, False)
+        api_drawing.application.HideMessage = 0
+
+        # Закрыть чертеж
+        #api_drawing.kompas_document.Close(0)
+
+
+if __name__ == '__main__':
+    create_dxf = CreateDxf()
 
 
 
