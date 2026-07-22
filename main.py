@@ -1,7 +1,6 @@
 #TODO v0.2 Сделать пакетное открываение деталей
 #TODO v0.2 Сделать автоматическое определение самой большой поверхности
 #TODO v0.2 Сделать определение толщины для листовых и не для листовых деталей
-#TODO v0.2 Добавить работу с исполнениями (сейчас сохраняется только первое исполнение)
 
 from time import sleep
 from win32com.client import Dispatch, gencache, VARIANT
@@ -31,15 +30,8 @@ class KompasAPI:
             self.selection_manager = self.kompas_document_3d.SelectionManager
             self.part_7 = self.kompas_document_3d.TopPart
             self.embodiments_manager = self.api7.IEmbodimentsManager(self.part_7)
-
             self.current_embodiment_marking = self.embodiments_manager.GetCurrentEmbodimentMarking(-1, False)
             self.embodiment = self.embodiments_manager.SetCurrentEmbodiment
-            print('-1 - ', self.current_embodiment_marking)
-            print('1 - ', self.embodiments_manager.GetCurrentEmbodimentMarking(1, False))
-            print('2 - ', self.embodiments_manager.GetCurrentEmbodimentMarking(2, False))
-            print('4 - ', self.embodiments_manager.GetCurrentEmbodimentMarking(4, False))
-            print('8 - ', self.embodiments_manager.GetCurrentEmbodimentMarking(8, False))
-
             self.sheet_metal_container = self.api7.ISheetMetalContainer(self.part_7)
             self.sheet_metal_bodies = self.sheet_metal_container.SheetMetalBodies
             self.sheet_metal_body = self.sheet_metal_bodies.SheetMetalBody(0)
@@ -75,9 +67,9 @@ class KompasAPI:
             self.layout_sheets = self.kompas_document.LayoutSheets
             self.layout_sheet = self.layout_sheets.ItemByNumber(1)
         else:
-            #TODO Сделать всплывающее окно
-            print('Ошибка, макрос работает только с деталью')
-            sys.exit()
+            self.application.MessageBoxEx("Данный макрос работает только с деталью",
+                                          "Документ не является деталью", 0)
+            sys.exit(1)
 
     def add_drawing_object(self):
         if self.view is not None:
