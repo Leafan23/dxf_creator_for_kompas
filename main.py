@@ -115,20 +115,13 @@ class CreateDxf:
 
         # Вставить вид с модели с сохраненным видом, удалить рамку
         api_drawing.views.AddStandartViews(api.kompas_document.PathName, 'Для развертки', 0, 0, 0, 1, 0, 0)
-
         api_drawing.view = api_drawing.views.View(1)
         api_drawing.association_view = api_drawing.api7.IAssociationView(api_drawing.view)
         if api.is_sheet_metal:
             api_drawing.association_view.Unfold = True
-
         api_drawing.embodiments_manager = api_drawing.api7.IEmbodimentsManager(api_drawing.association_view)
         api_drawing.embodiments_manager.SetCurrentEmbodiment(api.current_embodiment_marking)
-
-        print(api_drawing.embodiments_manager.GetCurrentEmbodimentMarking(-1, False))
-        print(api_drawing.association_view.ProjectionName)
-
         api_drawing.association_view.Update()
-        #print(api_drawing.association_view.AssociationObjects(api_drawing.))
         api_drawing.kompas_document_2d_1.RebuildDocument()  # перестроение всего документа, скорее всего излишнее действие
         api_drawing.layout_sheet.Delete()
 
