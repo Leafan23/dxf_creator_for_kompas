@@ -1,5 +1,4 @@
 #TODO v0.2 Сделать пакетное открываение деталей
-#TODO v0.2 Сделать автоматическое определение самой большой поверхности
 #TODO v0.2 Сделать определение толщины для листовых и не для листовых деталей
 
 from time import sleep
@@ -71,6 +70,18 @@ class KompasAPI:
                                           "Документ не является деталью", 0)
             sys.exit(1)
 
+    def select_max_face(self):
+        feature_7 = self.api7.IFeature7(self.part_7)
+        model_objects = feature_7.ModelObjects(6)
+        flat_face = []
+        for i in model_objects:
+            if i.IsPlanar:
+                flat_face.append(i)
+        flat_face_dim = []
+        for i in flat_face:
+            flat_face_dim.append(i.GetArea(1))
+        self.selection_manager.Select(flat_face[flat_face_dim.index(max(flat_face_dim))])
+
     def add_drawing_object(self):
         if self.view is not None:
             self.drawing_object = self.api7.IDrawingObject(self.view)
@@ -102,6 +113,8 @@ class CreateDxf:
         api = KompasAPI()
 
         # Сделать нормально к выделенной поверхности
+        if api.selection_manager.SelectedObjects is None:
+            api.select_max_face()
         api.view_projection_manager.OrientationNormalTo(api.selection_manager.SelectedObjects)
         sleep(
             1)  # надо для того, что бы камера успела навестись в положение "Нормально к..", иначе вид получается промежуточный
