@@ -17,7 +17,7 @@ class KompasAPI:
         self.is_sheet_metal = None # Признак детали как листового тела
         self.sheet_thickness = None # Толщина материала
 
-        if not None:
+        if kompas_document is None:
             self.kompas_document = self.application.ActiveDocument
         else:
             self.kompas_document = kompas_document
@@ -101,17 +101,6 @@ class KompasAPI:
     def add_drawing_object(self):
         if self.view is not None:
             self.drawing_object = self.api7.IDrawingObject(self.view)
-
-    def print_view_propertys(self):
-        print('view.Angle = ', self.view.Angle)
-        print('view.Background = ', self.view.Background)
-        print('view.Color = ', self.view.Color)
-        print('view.Comment = ', self.view.Comment)
-        print('view.Current = ', self.view.Current)
-        print('view.Name = ', self.view.Name)
-        print('view.Number = ', self.view.Number)
-        print('view.ObjectCount = ', self.view.ObjectCount)
-        print('view.Scale = ', self.view.Scale)
 
     def add_view(self, view_name):
         """Добавить вид с именем. Обновляет вид, если уже есть с таким именем"""
