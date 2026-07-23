@@ -1,5 +1,5 @@
-#TODO v0.2 Сделать пакетное открываение деталей
-#TODO v0.2 Сделать определение толщины для листовых и не для листовых деталей
+#TODO v0.3 Сделать пакетное открываение деталей
+#TODO v0.3 Сделать GUI интерфейс
 
 from time import sleep
 from win32com.client import Dispatch, gencache, VARIANT
@@ -15,6 +15,7 @@ class KompasAPI:
         system_settings = self.application.SystemSettings
         self.lib_path = system_settings.SystemPath(1) + r"\ImpExp\dwgdxfExp.rtw"
         self.is_sheet_metal = None # Признак детали как листового тела
+        self.sheet_thickness = None # Толщина материала
 
         if not None:
             self.kompas_document = self.application.ActiveDocument
@@ -43,6 +44,19 @@ class KompasAPI:
                 self.is_sheet_metal = False
             else:
                 self.is_sheet_metal = True
+
+            # Определение толщины
+            feature_7 = self.api7.IFeature7(self.part_7)
+            if self.is_sheet_metal:
+                variables_7 = feature_7.Variables(False, True)
+                for i in variables_7:
+                    if i.Name == 'SM_Thickness':
+                        self.sheet_thickness = float(i.Value)
+            else:
+                self.body_7 = feature_7.ResultBodies
+                useless_variable, x_1, y_1, z_1, x_2, y_2, z_2 = self.body_7.GetGabarit()
+                self.sheet_thickness = min((x_2 - x_1, y_2 - y_1, z_2 - z_1))
+
             # Создание развертки и ее обновление по выделенной поверхности
             if self.is_sheet_metal:
                 self.sheet_metal_bend_unfold_parameters = self.sheet_metal_container.SheetMetalBendUnfoldParameters
@@ -142,7 +156,8 @@ class CreateDxf:
         api_drawing.convert = api_drawing.application.Converter(api_drawing.lib_path)
         api_drawing.convert.Convert(api_drawing.kompas_document.PathName,
                                     api.kompas_document.PathName.rpartition('.')[0] +
-                                    api.embodiments_manager.GetCurrentEmbodimentMarking(2, False) +
+                                    api.embodiments_manager.GetCurrentEmbodimentMarking(2, False) + ' ' +
+                                    str(api.sheet_thickness) + ' мм ' +
                                     ".dxf", 1, False)
         api_drawing.application.HideMessage = 0
 
