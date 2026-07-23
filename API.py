@@ -14,12 +14,14 @@ class KompasAPI:
         self.lib_path = system_settings.SystemPath(1) + r"\ImpExp\dwgdxfExp.rtw"
         self.is_sheet_metal = None # Признак детали как листового тела
         self.sheet_thickness = None # Толщина материала
+        self.is_for_multiple_use = False # экземпляр для создания множества dxf
 
         self.documents = self.application.Documents
         if kompas_document is None:
             if file_address is None:
                 self.kompas_document = self.application.ActiveDocument
             else:
+                self.is_for_multiple_use = True
                 self.kompas_document = self.documents.Open(file_address, True, False)
         else:
             self.kompas_document = kompas_document
@@ -54,8 +56,8 @@ class KompasAPI:
                     if i.Name == 'SM_Thickness':
                         self.sheet_thickness = float(i.Value)
             else:
-                self.body_7 = feature_7.ResultBodies
-                useless_variable, x_1, y_1, z_1, x_2, y_2, z_2 = self.body_7.GetGabarit()
+                body_7 = feature_7.ResultBodies
+                useless_variable, x_1, y_1, z_1, x_2, y_2, z_2 = body_7.GetGabarit()
                 self.sheet_thickness = min((x_2 - x_1, y_2 - y_1, z_2 - z_1))
 
             # Создание развертки и ее обновление по выделенной поверхности
@@ -157,6 +159,9 @@ class CreateDxf:
         api_drawing.application.HideMessage = 0
 
         # Закрыть чертеж
-        api_drawing.kompas_document.Close(0)
+        api_drawing.kompas_document.Close(0) # закрыть без сохранения
 
-        api.kompas_document.Active = True
+        if api.is_for_multiple_use:
+            api.kompas_document.Close(1) # закрыть с сохранением
+        else:
+            api.kompas_document.Active = True
