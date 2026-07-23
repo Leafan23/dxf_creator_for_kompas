@@ -28,6 +28,8 @@ class KompasAPI:
             self.view_projection_manager = self.kompas_document_3d_1.ViewProjectionManager
             self.selection_manager = self.kompas_document_3d.SelectionManager
             self.part_7 = self.kompas_document_3d.TopPart
+            if self.selection_manager.SelectedObjects is None:
+                self.select_max_face()
             self.embodiments_manager = self.api7.IEmbodimentsManager(self.part_7)
             self.current_embodiment_marking = self.embodiments_manager.GetCurrentEmbodimentMarking(-1, False)
             self.embodiment = self.embodiments_manager.SetCurrentEmbodiment
@@ -113,8 +115,6 @@ class CreateDxf:
         api = KompasAPI()
 
         # Сделать нормально к выделенной поверхности
-        if api.selection_manager.SelectedObjects is None:
-            api.select_max_face()
         api.view_projection_manager.OrientationNormalTo(api.selection_manager.SelectedObjects)
         sleep(
             1)  # надо для того, что бы камера успела навестись в положение "Нормально к..", иначе вид получается промежуточный
