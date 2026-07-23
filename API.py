@@ -154,7 +154,7 @@ class CreateDxf:
         api_drawing.convert.Convert(api_drawing.kompas_document.PathName,
                                     api.kompas_document.PathName.rpartition('.')[0] +
                                     api.embodiments_manager.GetCurrentEmbodimentMarking(2, False) + ' ' +
-                                    str(api.sheet_thickness) + ' мм ' +
+                                    str(round(api.sheet_thickness, 3)) + ' мм ' +
                                     ".dxf", 1, False)
         api_drawing.application.HideMessage = 0
 
