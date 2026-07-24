@@ -15,6 +15,7 @@ class KompasAPI:
         self.is_sheet_metal = None # Признак детали как листового тела
         self.sheet_thickness = None # Толщина материала
         self.is_for_multiple_use = False # экземпляр для создания множества dxf
+        self.embodiment_count = None # количество исполнений
 
         self.documents = self.application.Documents
         if kompas_document is None:
@@ -35,8 +36,9 @@ class KompasAPI:
             if self.selection_manager.SelectedObjects is None:
                 self.select_max_face()
             self.embodiments_manager = self.api7.IEmbodimentsManager(self.part_7)
+            self.embodiment_count = self.embodiments_manager.EmbodimentCount
             self.current_embodiment_marking = self.embodiments_manager.GetCurrentEmbodimentMarking(-1, False)
-            self.embodiment = self.embodiments_manager.SetCurrentEmbodiment
+            self.embodiment = self.embodiments_manager.CurrentEmbodiment
             self.sheet_metal_container = self.api7.ISheetMetalContainer(self.part_7)
             self.sheet_metal_bodies = self.sheet_metal_container.SheetMetalBodies
             self.sheet_metal_body = self.sheet_metal_bodies.SheetMetalBody(0)
@@ -133,33 +135,44 @@ class CreateDxf:
         # Создать ориентацию вида по этой поверхности
         api.add_view('Для развертки')
 
-        # Создать пустой чертеж, без рамки
-        api_drawing = KompasAPI(api.documents.Add(1, True))
-        api_drawing.application.HideMessage = 1
+        for i in range(api.embodiment_count):
+            if api.is_for_multiple_use:
+                # Сделать активным исполнение в 3D-модели
+                api.embodiments_manager.SetCurrentEmbodiment(i)
+                api.current_embodiment_marking = api.embodiments_manager.GetCurrentEmbodimentMarking(-1, False)
 
-        # Вставить вид с модели с сохраненным видом, удалить рамку
-        api_drawing.views.AddStandartViews(api.kompas_document.PathName, 'Для развертки', 0, 0, 0, 1, 0, 0)
-        api_drawing.view = api_drawing.views.View(1)
-        api_drawing.association_view = api_drawing.api7.IAssociationView(api_drawing.view)
-        if api.is_sheet_metal:
-            api_drawing.association_view.Unfold = True
-        api_drawing.embodiments_manager = api_drawing.api7.IEmbodimentsManager(api_drawing.association_view)
-        api_drawing.embodiments_manager.SetCurrentEmbodiment(api.current_embodiment_marking)
-        api_drawing.association_view.Update()
-        api_drawing.kompas_document_2d_1.RebuildDocument()  # перестроение всего документа, скорее всего излишнее действие
-        api_drawing.layout_sheet.Delete()
+            # Создать пустой чертеж, без рамки
+            api_drawing = KompasAPI(api.documents.Add(1, True))
+            api_drawing.application.HideMessage = 1
 
-        # Сохранить как dxf
-        api_drawing.convert = api_drawing.application.Converter(api_drawing.lib_path)
-        api_drawing.convert.Convert(api_drawing.kompas_document.PathName,
-                                    api.kompas_document.PathName.rpartition('.')[0] +
-                                    api.embodiments_manager.GetCurrentEmbodimentMarking(2, False) + ' ' +
-                                    str(round(api.sheet_thickness, 3)) + ' мм ' +
-                                    ".dxf", 1, False)
-        api_drawing.application.HideMessage = 0
+            # Вставить вид с модели с сохраненным видом, удалить рамку
+            api_drawing.views.AddStandartViews(api.kompas_document.PathName, 'Для развертки', 0, 0, 0, 1, 0, 0)
+            api_drawing.view = api_drawing.views.View(1)
+            api_drawing.association_view = api_drawing.api7.IAssociationView(api_drawing.view)
+            if api.is_sheet_metal:
+                api_drawing.association_view.Unfold = True
+            api_drawing.embodiments_manager = api_drawing.api7.IEmbodimentsManager(api_drawing.association_view)
 
-        # Закрыть чертеж
-        api_drawing.kompas_document.Close(0) # закрыть без сохранения
+            api_drawing.embodiments_manager.SetCurrentEmbodiment(api.current_embodiment_marking)
+
+            api_drawing.association_view.Update()
+            api_drawing.kompas_document_2d_1.RebuildDocument()  # перестроение всего документа, скорее всего излишнее действие
+            api_drawing.layout_sheet.Delete()
+
+            # Сохранить как dxf
+            api_drawing.convert = api_drawing.application.Converter(api_drawing.lib_path)
+            api_drawing.convert.Convert(api_drawing.kompas_document.PathName,
+                                        api.kompas_document.PathName.rpartition('.')[0] +
+                                        api.embodiments_manager.GetCurrentEmbodimentMarking(2, False) + ' ' +
+                                        str(round(api.sheet_thickness, 3)) + ' мм' +
+                                        ".dxf", 1, False)
+            api_drawing.application.HideMessage = 0
+
+            # Закрыть чертеж
+            api_drawing.kompas_document.Close(0) # закрыть без сохранения
+
+            if not api.is_for_multiple_use:
+                break
 
         if api.is_for_multiple_use:
             api.kompas_document.Close(1) # закрыть с сохранением
