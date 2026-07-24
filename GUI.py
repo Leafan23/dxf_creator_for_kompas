@@ -78,11 +78,8 @@ class DrawingZone(Tk.CTkScrollableFrame):
         super().__init__(master, *args, **kwargs)
         self.drawing_strings = []
         self.master = master
-        for i in master.files_for_dxf_creation:
-            self.drawing_strings.append(DrawingString(master=self).pack())
 
     def create_string(self):
-        print('create_string')
         print(self.master.files_for_dxf_creation)
 
 
@@ -91,10 +88,13 @@ class DrawingZone(Tk.CTkScrollableFrame):
 class DrawingString(Tk.CTkFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
+        self.drawing_strings = []
 
         self.label = Tk.CTkLabel(self)
         self.label.pack()
         #Строка пути
         #Кнопка удаления
 
+    def add(self):
+        pass
 
