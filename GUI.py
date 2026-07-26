@@ -1,7 +1,7 @@
 import customtkinter as Tk
 import API
 from pathlib import Path
-from tkinterdnd2 import TkinterDnD, DND_ALL, DND_FILES
+from tkinterdnd2 import TkinterDnD, DND_ALL
 import os.path
 from PIL import Image
 
