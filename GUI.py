@@ -2,6 +2,8 @@ import customtkinter as Tk
 import API
 from pathlib import Path
 from tkinterdnd2 import TkinterDnD, DND_ALL
+import os.path
+from PIL import Image
 
 
 
@@ -10,17 +12,16 @@ class App(Tk.CTk):
         super().__init__()
         self.title("dxf creator")
         self.attributes("-topmost", True)
-        self.main_fraim = MainFrame(master=self)
-        self.main_fraim.pack()
+        self.main_frame = MainFrame(master=self)
+        self.main_frame.pack()
 
 
 
 class MainFrame(Tk.CTkFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
-        self.files_for_dxf_creation = []
         self.label_list = []
-        self.path_list = [] # то же самое что и self.files_for_dxf_creation - список путей на преобразование
+        self.path_list = [] #  список путей на преобразование
 
         self.drop_zone = DndZone(master=self, width=300, height=300, corner_radius=15)
         self.drop_zone.grid(row=0, column=0, columnspan=2)
@@ -34,6 +35,12 @@ class MainFrame(Tk.CTkFrame):
                                      fg_color='orange',
                                      text_color='black')
         self.button_2.grid(row=1, column=1, sticky='ew', padx=3, pady=3)
+
+        self.icon_image = Tk.CTkImage(
+            light_image=Image.open("assets/icon-trash-can.png"),
+            dark_image=Image.open("assets/icon-trash-can.png"),
+            size=(20, 20)
+        )
 
         self.drawing_zone = DrawingZone(master=self)
         self.drawing_zone.grid(row=2, column=0, columnspan=2, sticky='ew')
@@ -51,13 +58,12 @@ class MainFrame(Tk.CTkFrame):
         self.button_2.configure(state="disabled")
 
     def get_path(self, event):
-
         dropped_file = event.data.replace("{", "").replace("}", "")
         new_string = dropped_file.split(' ')
         for i in new_string:
             if i not in self.path_list:
                 self.label_list.append(SelectString(master=self.drawing_zone, text=i))
-                self.label_list[-1].pack()
+                self.label_list[-1].pack(fill='x')
                 self.path_list.append(i)
         print(self.path_list != [])
         if self.path_list:
@@ -69,7 +75,7 @@ class DndZone(Tk.CTkFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
-        label_1 = Tk.CTkLabel(master=self, width=500, height=300)
+        label_1 = Tk.CTkLabel(master=self, width=300, height=300)
         label_1.configure(
             text='Перетащите сюда файлы \n деталей компас-3d (.m3d) \n и нажмите "Создать группу dxf"')
         label_1.pack()
@@ -96,10 +102,12 @@ class SelectString(Tk.CTkFrame):
         self.text = text
         self.my_master = master
 
-        label = Tk.CTkLabel(self, text=text)
-        label.pack(side='left')
-        button = Tk.CTkButton(self, command=self.delete_string)
-        button.pack(side='left')
+        button = Tk.CTkButton(self, command=self.delete_string, image=self.my_master.my_master.icon_image, text="",
+                              width=30, height=30, fg_color='#ef5350')
+        button.pack(side="right")
+        label = Tk.CTkLabel(self, text=os.path.basename(text))
+        label.pack(side="right", padx=30)
+
 
     def delete_string(self):
         self.destroy()
@@ -108,4 +116,3 @@ class SelectString(Tk.CTkFrame):
         if not self.my_master.my_master.path_list:
             self.my_master.my_master.button_2.configure(state="disabled")
 
-        #self.my_master.my_master.label_list = []
