@@ -1,7 +1,7 @@
 import customtkinter as Tk
 import API
 from pathlib import Path
-from tkinterdnd2 import TkinterDnD, DND_ALL
+from tkinterdnd2 import TkinterDnD, DND_ALL, DND_FILES
 import os.path
 from PIL import Image
 
@@ -48,6 +48,8 @@ class MainFrame(Tk.CTkFrame):
 
         self.TkdndVersion = TkinterDnD._require(self)
         self.drop_target_register(DND_ALL)
+        self.dnd_bind("<<DropEnter>>", self.drop_enter)
+        self.dnd_bind("<<DropLeave>>", self.drop_leave)
         self.dnd_bind("<<Drop>>", self.get_path)
 
     def create_dxf_pack(self):
@@ -58,7 +60,14 @@ class MainFrame(Tk.CTkFrame):
         self.path_list = []
         self.button_2.configure(state="disabled")
 
+    def drop_enter(self, event):
+        self.drop_zone.label.configure(border_width=2)
+
+    def drop_leave(self, event):
+        self.drop_zone.label.configure(border_width=0)
+
     def get_path(self, event):
+        self.drop_zone.label.configure(border_width=0)
         dropped_file = self.my_master.splitlist(event.data)
         for i in dropped_file:
             extention = os.path.splitext(i)[1]
@@ -68,6 +77,7 @@ class MainFrame(Tk.CTkFrame):
                 self.path_list.append(i)
         if self.path_list:
             self.button_2.configure(state="enabled")
+        return event.action
 
 
 
@@ -75,10 +85,10 @@ class DndZone(Tk.CTkFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
-        label_1 = Tk.CTkLabel(master=self, width=300, height=300)
-        label_1.configure(
+        self.label = Tk.CTkLabel(master=self, width=300, height=300, bg_color="transparent", corner_radius=10, border_width=0, border_color="orange")
+        self.label.configure(
             text='Перетащите сюда файлы \n деталей компас-3d (.m3d) \n и нажмите "Создать группу dxf"')
-        label_1.pack()
+        self.label.pack()
 
 
 
