@@ -61,7 +61,8 @@ class MainFrame(Tk.CTkFrame):
     def get_path(self, event):
         dropped_file = self.my_master.splitlist(event.data)
         for i in dropped_file:
-            if i not in self.path_list:
+            extention = os.path.splitext(i)[1]
+            if i not in self.path_list and extention == ".m3d": # добавляются только m3d и только те файлы, которых еще нет в списке
                 self.label_list.append(SelectString(master=self.drawing_zone, text=i))
                 self.label_list[-1].pack(fill='x')
                 self.path_list.append(i)
