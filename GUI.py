@@ -20,6 +20,7 @@ class App(Tk.CTk):
 class MainFrame(Tk.CTkFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
+        self.my_master = master
         self.label_list = []
         self.path_list = [] #  список путей на преобразование
 
@@ -58,14 +59,12 @@ class MainFrame(Tk.CTkFrame):
         self.button_2.configure(state="disabled")
 
     def get_path(self, event):
-        dropped_file = event.data.replace("{", "").replace("}", "")
-        new_string = dropped_file.split(' ')
-        for i in new_string:
+        dropped_file = self.my_master.splitlist(event.data)
+        for i in dropped_file:
             if i not in self.path_list:
                 self.label_list.append(SelectString(master=self.drawing_zone, text=i))
                 self.label_list[-1].pack(fill='x')
                 self.path_list.append(i)
-        print(self.path_list != [])
         if self.path_list:
             self.button_2.configure(state="enabled")
 
@@ -79,13 +78,6 @@ class DndZone(Tk.CTkFrame):
         label_1.configure(
             text='Перетащите сюда файлы \n деталей компас-3d (.m3d) \n и нажмите "Создать группу dxf"')
         label_1.pack()
-
-    def drop_func(self, pathfile):
-        self.master.files_for_dxf_creation.extend(pathfile)
-        self.master.files_for_dxf_creation = list(dict.fromkeys(self.master.files_for_dxf_creation))
-        print(len(self.master.files_for_dxf_creation))
-        self.master.button_2.configure(state="normal")
-        self.master.drawing_zone.create_string()
 
 
 
@@ -112,7 +104,6 @@ class SelectString(Tk.CTkFrame):
     def delete_string(self):
         self.destroy()
         self.my_master.my_master.path_list.remove(self.text)
-        print(self.my_master.my_master.path_list)
         if not self.my_master.my_master.path_list:
             self.my_master.my_master.button_2.configure(state="disabled")
 
