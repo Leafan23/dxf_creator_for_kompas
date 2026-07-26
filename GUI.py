@@ -1,7 +1,7 @@
 import customtkinter as Tk
 import API
 from pathlib import Path
-import pywinstyles
+from tkinterdnd2 import TkinterDnD, DND_ALL
 
 
 
@@ -19,6 +19,8 @@ class MainFrame(Tk.CTkFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
         self.files_for_dxf_creation = []
+        self.label_list = []
+        self.path_list = [] # то же самое что и self.files_for_dxf_creation - список путей на преобразование
 
         self.drop_zone = DndZone(master=self, width=300, height=300, corner_radius=15)
         self.drop_zone.grid(row=0, column=0, columnspan=2)
@@ -36,32 +38,40 @@ class MainFrame(Tk.CTkFrame):
         self.drawing_zone = DrawingZone(master=self)
         self.drawing_zone.grid(row=2, column=0, columnspan=2, sticky='ew')
 
+        self.TkdndVersion = TkinterDnD._require(self)
+        self.drop_target_register(DND_ALL)
+        self.dnd_bind("<<Drop>>", self.get_path)
+
     def create_dxf_pack(self):
-        if len(self.files_for_dxf_creation) > 0:  # проверка на пустой список
-            for i in self.files_for_dxf_creation:
+        if len(self.path_list) > 0:  # проверка на пустой список
+            for i in self.path_list:
                 if Path(i).exists():
                     API.CreateDxf(i)
-        self.files_for_dxf_creation = []
+        self.path_list = []
         self.button_2.configure(state="disabled")
 
-    def on_start_hover(self):
-        self.drop_zone.width = 330
-        self.drop_zone.height = 330
+    def get_path(self, event):
 
-    def on_end_hover(self):
-        self.drop_zone.width = 300
-        self.drop_zone.height = 300
+        dropped_file = event.data.replace("{", "").replace("}", "")
+        new_string = dropped_file.split(' ')
+        for i in new_string:
+            if i not in self.path_list:
+                self.label_list.append(SelectString(master=self.drawing_zone, text=i))
+                self.label_list[-1].pack()
+                self.path_list.append(i)
+        print(self.path_list != [])
+        if self.path_list:
+            self.button_2.configure(state="enabled")
 
 
 
 class DndZone(Tk.CTkFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
-        pywinstyles.apply_dnd(self, self.drop_func)
 
-        label_1 = Tk.CTkLabel(master=self, width=300, height=300)
+        label_1 = Tk.CTkLabel(master=self, width=500, height=300)
         label_1.configure(
-            text='Перетащите сюда файлы деталей компас-3d (.m3d) \n и нажмите "Создать группу dxf"')
+            text='Перетащите сюда файлы \n деталей компас-3d (.m3d) \n и нажмите "Создать группу dxf"')
         label_1.pack()
 
     def drop_func(self, pathfile):
@@ -76,25 +86,26 @@ class DndZone(Tk.CTkFrame):
 class DrawingZone(Tk.CTkScrollableFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
-        self.drawing_strings = []
-        self.master = master
-
-    def create_string(self):
-        print(self.master.files_for_dxf_creation)
+        self.my_master = master
 
 
 
-
-class DrawingString(Tk.CTkFrame):
-    def __init__(self, master, *args, **kwargs):
+class SelectString(Tk.CTkFrame):
+    def __init__(self,master, text='test_string', *args, **kwargs):
         super().__init__(master, *args, **kwargs)
-        self.drawing_strings = []
+        self.text = text
+        self.my_master = master
 
-        self.label = Tk.CTkLabel(self)
-        self.label.pack()
-        #Строка пути
-        #Кнопка удаления
+        label = Tk.CTkLabel(self, text=text)
+        label.pack(side='left')
+        button = Tk.CTkButton(self, command=self.delete_string)
+        button.pack(side='left')
 
-    def add(self):
-        pass
+    def delete_string(self):
+        self.destroy()
+        self.my_master.my_master.path_list.remove(self.text)
+        print(self.my_master.my_master.path_list)
+        if not self.my_master.my_master.path_list:
+            self.my_master.my_master.button_2.configure(state="disabled")
 
+        #self.my_master.my_master.label_list = []
