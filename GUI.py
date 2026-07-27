@@ -60,6 +60,7 @@ class MainFrame(Tk.CTkFrame):
             i.destroy()
         self.button_2.configure(state="disabled")
         self.label_list = []
+        self.update()
         if len(self.path_list) > 0:  # проверка на пустой список
             for i in self.path_list:
                 if Path(i).exists():
