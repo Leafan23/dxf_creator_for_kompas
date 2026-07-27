@@ -47,6 +47,8 @@ class MainFrame(Tk.CTkFrame):
         self.drawing_zone = DrawingZone(master=self)
         self.drawing_zone.grid(row=2, column=0, columnspan=2, sticky='ew')
 
+        self.ready_label = None
+
         self.TkdndVersion = TkinterDnD._require(self)
         self.drop_target_register(DND_ALL)
         self.dnd_bind("<<DropEnter>>", self.drop_enter)
@@ -54,12 +56,17 @@ class MainFrame(Tk.CTkFrame):
         self.dnd_bind("<<Drop>>", self.get_path)
 
     def create_dxf_pack(self):
+        for i in self.label_list:
+            i.destroy()
+        self.button_2.configure(state="disabled")
+        self.label_list = []
         if len(self.path_list) > 0:  # проверка на пустой список
             for i in self.path_list:
                 if Path(i).exists():
                     API.CreateDxf(i)
         self.path_list = []
-        self.button_2.configure(state="disabled")
+        self.ready_label = Tk.CTkLabel(self, text='Готово', bg_color='green')
+        self.ready_label.grid(row=3, column=0, columnspan=2, sticky='ew')
 
     def drop_enter(self, event):
         self.drop_zone.label.configure(border_width=2)
@@ -68,6 +75,9 @@ class MainFrame(Tk.CTkFrame):
         self.drop_zone.label.configure(border_width=0)
 
     def get_path(self, event):
+        if self.ready_label is not None:
+            self.ready_label.destroy()
+            self.ready_label = None
         self.drop_zone.label.configure(border_width=0)
         dropped_file = self.my_master.splitlist(event.data)
         for i in dropped_file:
