@@ -32,9 +32,10 @@ class MainFrame(Tk.CTkFrame):
         self.button_2 = Tk.CTkButton(self,
                                      text='Создать группу dxf',
                                      command=self.create_dxf_pack,
-                                     state="disabled",
                                      fg_color='orange',
-                                     text_color='black')
+                                     hover_color='#d97706',
+                                     text_color='black',
+                                     state="disabled")
         self.button_2.grid(row=1, column=1, sticky='ew', padx=3, pady=3)
 
         self.icon_image = Tk.CTkImage(
@@ -73,10 +74,10 @@ class MainFrame(Tk.CTkFrame):
             extention = os.path.splitext(i)[1]
             if i not in self.path_list and extention == ".m3d": # добавляются только m3d и только те файлы, которых еще нет в списке
                 self.label_list.append(SelectString(master=self.drawing_zone, text=i))
-                self.label_list[-1].pack(fill='x')
+                self.label_list[-1].pack(fill='x', pady=1)
                 self.path_list.append(i)
         if self.path_list:
-            self.button_2.configure(state="enabled")
+            self.button_2.configure(state="normal")
         return event.action
 
 
