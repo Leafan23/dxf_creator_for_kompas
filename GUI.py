@@ -27,6 +27,10 @@ class MainFrame(Tk.CTkFrame):
         self.drop_zone = DndZone(master=self, width=300, height=300, corner_radius=15)
         self.drop_zone.grid(row=0, column=0, columnspan=2)
 
+        # В MainFrame.__init__, после создания button_1 и button_2:
+        self.button_pdf = Tk.CTkButton(self, text='Создать PDF', command=self.create_pdf_pack)
+        self.button_pdf.grid(row=1, column=2, sticky='ew', padx=3, pady=3)
+
         button_1 = Tk.CTkButton(self, text='Создать dxf', command=API.CreateDxf)
         button_1.grid(row=1, column=0, sticky='ew', padx=3, pady=3)
         self.button_2 = Tk.CTkButton(self,
@@ -55,16 +59,28 @@ class MainFrame(Tk.CTkFrame):
         self.dnd_bind("<<DropLeave>>", self.drop_leave)
         self.dnd_bind("<<Drop>>", self.get_path)
 
+    def create_pdf_pack(self):
+        """Пакетная обработка файлов .cdw в PDF."""
+        for path in self.path_list:
+            if path.lower().endswith('.cdw') and Path(path).exists():
+                try:
+                    API.CreatePdf(path)
+                except Exception as e:
+                    print(f"Ошибка при обработке {path}: {e}")
+
     def create_dxf_pack(self):
         for i in self.label_list:
             i.destroy()
         self.button_2.configure(state="disabled")
         self.label_list = []
         self.update()
-        if len(self.path_list) > 0:  # проверка на пустой список
+        if len(self.path_list) > 0:
             for i in self.path_list:
                 if Path(i).exists():
-                    API.CreateDxf(i)
+                    if i.lower().endswith(".m3d"):
+                        API.CreateDxf(i)
+                    elif i.lower().endswith(".cdw"):
+                        API.CreatePdf(i)
         self.path_list = []
         self.ready_label = Tk.CTkLabel(self, text='Готово', bg_color='green')
         self.ready_label.grid(row=3, column=0, columnspan=2, sticky='ew')
@@ -82,8 +98,8 @@ class MainFrame(Tk.CTkFrame):
         self.drop_zone.label.configure(border_width=0)
         dropped_file = self.my_master.splitlist(event.data)
         for i in dropped_file:
-            extention = os.path.splitext(i)[1]
-            if i not in self.path_list and extention == ".m3d": # добавляются только m3d и только те файлы, которых еще нет в списке
+            extention = os.path.splitext(i)[1].lower()  # .lower() — на случай .M3D/.CDW
+            if i not in self.path_list and extention in (".m3d", ".cdw"):
                 self.label_list.append(SelectString(master=self.drawing_zone, text=i))
                 self.label_list[-1].pack(fill='x', pady=1)
                 self.path_list.append(i)
@@ -99,7 +115,7 @@ class DndZone(Tk.CTkFrame):
 
         self.label = Tk.CTkLabel(master=self, width=300, height=300, bg_color="transparent", corner_radius=10, border_width=0, border_color="orange")
         self.label.configure(
-            text='Перетащите сюда файлы \n деталей компас-3d (.m3d) \n и нажмите "Создать группу dxf"')
+            text='Перетащите сюда файлы \n деталей (.m3d) или чертежей (.cdw) \n и нажмите "Создать группу"')
         self.label.pack()
 
 
