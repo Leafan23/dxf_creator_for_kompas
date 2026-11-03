@@ -210,7 +210,6 @@ def CreatePdf(file_path):
 
         # ksDocumentSpecification = 3 — спецификация
         suffix = " СП" if doc.DocumentType == 3 else ""
-        print(doc.DocumentType)
 
         # Путь к библиотеке экспорта PDF
         system_settings = application.SystemSettings
