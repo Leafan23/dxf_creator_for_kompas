@@ -60,27 +60,35 @@ class MainFrame(Tk.CTkFrame):
         self.dnd_bind("<<Drop>>", self.get_path)
 
     def create_pdf_pack(self):
-        """Пакетная обработка файлов .cdw в PDF."""
-        for path in self.path_list:
-            if path.lower().endswith('.cdw') and Path(path).exists():
-                try:
-                    API.CreatePdf(path)
-                except Exception as e:
-                    print(f"Ошибка при обработке {path}: {e}")
-
-    def create_dxf_pack(self):
+        """Пакетная обработка чертежей .cdw и спецификаций .spw → PDF."""
         for i in self.label_list:
             i.destroy()
         self.button_2.configure(state="disabled")
         self.label_list = []
         self.update()
+
         if len(self.path_list) > 0:
             for i in self.path_list:
-                if Path(i).exists():
-                    if i.lower().endswith(".m3d"):
-                        API.CreateDxf(i)
-                    elif i.lower().endswith(".cdw"):
-                        API.CreatePdf(i)
+                if Path(i).exists() and os.path.splitext(i)[1].lower() in (".cdw", ".spw"):
+                    API.CreatePdf(i)
+
+        self.path_list = []
+        self.ready_label = Tk.CTkLabel(self, text='Готово', bg_color='green')
+        self.ready_label.grid(row=3, column=0, columnspan=2, sticky='ew')
+
+    def create_dxf_pack(self):
+        """Пакетная обработка деталей .m3d → DXF."""
+        for i in self.label_list:
+            i.destroy()
+        self.button_2.configure(state="disabled")
+        self.label_list = []
+        self.update()
+
+        if len(self.path_list) > 0:
+            for i in self.path_list:
+                if Path(i).exists() and os.path.splitext(i)[1].lower() == ".m3d":
+                    API.CreateDxf(i)
+
         self.path_list = []
         self.ready_label = Tk.CTkLabel(self, text='Готово', bg_color='green')
         self.ready_label.grid(row=3, column=0, columnspan=2, sticky='ew')
