@@ -180,49 +180,49 @@ class CreateDxf:
             api.kompas_document.Active = True
 
 
-def CreatePdf(cdw_path):
+def CreatePdf(file_path):
     """
-    Открывает чертёж КОМПАС (.cdw) и экспортирует его в PDF.
-    Подавляет диалог перестроения чертежа при открытии (отвечает "Нет").
+    Открывает документ КОМПАС (.cdw — чертёж, .spw — спецификация)
+    и экспортирует его в PDF.
+    Для спецификации к имени файла добавляется суффикс " СП".
+    Подавляет диалог перестроения при открытии (отвечает "Нет").
+    Возвращает путь к сохранённому PDF.
     """
     from os.path import splitext
 
     application = Dispatch("KOMPAS.Application.7")
 
     # ksHideMessageNo = 2 — скрыть запросы, автоматически выбирая "Нет"
-    # (для диалога перестроения это значит "не перестраивать").
     application.HideMessage = 2
 
     opened_by_us = False
     doc = None
     try:
-        # Проверяем, не открыт ли уже этот документ в КОМПАС
+        # Если документ уже открыт — используем его
         for d in application.Documents:
-            if d.PathName.lower() == cdw_path.lower():
+            if d.PathName.lower() == file_path.lower():
                 doc = d
                 break
 
         if doc is None:
-            doc = application.Documents.Open(cdw_path, True, False)
+            doc = application.Documents.Open(file_path, True, False)
             opened_by_us = True
+
+        # ksDocumentSpecification = 5 — спецификация
+        suffix = " СП" if doc.DocumentType == 5 else ""
 
         # Путь к библиотеке экспорта PDF
         system_settings = application.SystemSettings
         pdf_dll_path = system_settings.SystemPath(5) + r"\Pdf2d.dll"
 
-        # Инициализируем конвертер и выполняем экспорт
         converter = application.Converter(pdf_dll_path)
-        pdf_path = splitext(cdw_path)[0] + ".pdf"
-        converter.Convert(cdw_path, pdf_path, 1, False)
+        pdf_path = splitext(file_path)[0] + suffix + ".pdf"
+        converter.Convert(file_path, pdf_path, 1, False)
 
         print(f"PDF сохранён: {pdf_path}")
         return pdf_path
 
     finally:
-        # Закрываем только тот документ, который открыли сами
         if opened_by_us and doc is not None:
             doc.Close(0)  # закрыть без сохранения
-
-        # Обязательно возвращаем флаг в исходное состояние,
-        # иначе все последующие сообщения КОМПАС останутся подавленными
         application.HideMessage = 0  # ksShowMessage

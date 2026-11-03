@@ -98,8 +98,8 @@ class MainFrame(Tk.CTkFrame):
         self.drop_zone.label.configure(border_width=0)
         dropped_file = self.my_master.splitlist(event.data)
         for i in dropped_file:
-            extention = os.path.splitext(i)[1].lower()  # .lower() — на случай .M3D/.CDW
-            if i not in self.path_list and extention in (".m3d", ".cdw"):
+            extention = os.path.splitext(i)[1].lower()
+            if i not in self.path_list and extention in (".m3d", ".cdw", ".spw"):
                 self.label_list.append(SelectString(master=self.drawing_zone, text=i))
                 self.label_list[-1].pack(fill='x', pady=1)
                 self.path_list.append(i)
