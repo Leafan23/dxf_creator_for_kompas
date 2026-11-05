@@ -2,6 +2,7 @@ from time import sleep
 from win32com.client import Dispatch, gencache, VARIANT
 import sys
 import os.path
+from os.path import splitext
 
 
 class KompasAPI:
@@ -188,7 +189,6 @@ def CreatePdf(file_path):
     Подавляет диалог перестроения при открытии (отвечает "Нет").
     Возвращает путь к сохранённому PDF.
     """
-    from os.path import splitext
 
     application = Dispatch("KOMPAS.Application.7")
 
@@ -226,3 +226,27 @@ def CreatePdf(file_path):
         if opened_by_us and doc is not None:
             doc.Close(0)  # закрыть без сохранения
         application.HideMessage = 0  # ksShowMessage
+
+def CreateCurrent():
+    """
+    Обрабатывает документ, открытый в КОМПАС в данный момент.
+    Деталь (.m3d) → DXF, чертёж (.cdw) / спецификация (.spw) → PDF.
+    """
+    application = Dispatch("KOMPAS.Application.7")
+    doc = application.ActiveDocument
+
+    if doc is None:
+        application.MessageBoxEx(
+            "В КОМПАС нет открытого документа",
+            "Нет активного документа", 0)
+        return
+
+    ext = splitext(doc.PathName)[1].lower()
+    if ext == ".m3d":
+        CreateDxf()
+    elif ext in (".cdw", ".spw"):
+        CreatePdf(doc.PathName)
+    else:
+        application.MessageBoxEx(
+            f"Неподдерживаемый тип документа: {ext}",
+            "Ошибка", 0)
